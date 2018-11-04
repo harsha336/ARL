@@ -1,0 +1,13 @@
+<launch>
+	<node name= "RosAria" pkg= "rosaria" type="RosAria">
+        <remap from="RosAria/cmd_vel" to="cmd_vel"/>
+    </node>
+	
+    <node name="joystickcontrol" pkg="joystick_control" type="joystickcontrol"/> 
+	<node name="sicklims" pkg="sicktoolbox_wrapper" type="sicklms">
+		<param name="port" type="string" value="/dev/ttyUSB1"/>
+	</node>
+  	<!-- .12 0 .15 0 0 0-->
+    <node name="laser_transform_publisher" pkg="tf" type="static_transform_publisher" args=".12 0 .15 0 0 0 base_link laser 100"/>
+	
+</launch>

@@ -1,0 +1,20 @@
+<launch>
+	<node name= "RosAria" pkg= "rosaria" type="RosAria">
+        <remap from="RosAria/cmd_vel" to="cmd_vel"/>
+    </node>
+			
+	<node name= "sicklms" pkg= "sicktoolbox_wrapper" type="sicklms">
+        <param name="port" type="string" value="/dev/ttyUSB1"/>
+        <param name="connect_delay" value="30"/>
+    </node>
+    
+    <!--<node name="joystickcontrol" pkg="joystick_control" type="joystickcontrol" output="log"/>-->
+
+  	<!-- .12 0 .15 0 0 0-->
+	<node name="laser_transform_publisher" pkg="tf" type="static_transform_publisher" args=".12 0 .15 0 0 0 base_link laser 100"/>
+
+	<node pkg="laser_filters" type="scan_to_scan_filter_chain" output="screen" name="laser_filter">
+	  <rosparam command="load" file="$(find pioneer_gmap)/filters/shadow_filter_example.yaml" />
+	</node>
+    	
+</launch>

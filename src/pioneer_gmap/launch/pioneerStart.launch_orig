@@ -1,0 +1,56 @@
+<launch>
+	<!-- Arguments for launching nodes -->
+	<arg name="Pioneer_Auto_Enabled" default="$(optenv PIONEER_AUTON_ENABLED false)"/>
+	<arg name="Pioneer_Bag_Enabled" default="$(optenv PIONEER_BAG_ENABLED false)"/>
+	
+	<node name= "RosAria" pkg= "rosaria" type="RosAria">
+        <remap from="RosAria/cmd_vel" to="cmd_vel"/>
+    </node>
+			
+	<node name= "sicklms" pkg= "sicktoolbox_wrapper" type="sicklms">
+        <param name="port" type="string" value="/dev/ttyUSB1"/>
+        <param name="connect_delay" value="30"/>
+    </node>
+    
+    <node name="joystickcontrol" pkg="joystick_control" type="joystickcontrol" unless="$(arg Pioneer_Auto_Enabled)" output="log"/> 
+  	<!-- .12 0 .15 0 0 0-->
+    <!-- <node name="laser_transform_publisher" pkg="tf" type="static_transform_publisher" args=".12 0 .15 0 0 0 base_link laser 100"/>-->
+
+	<!-- MAP SERVER NODE 
+	<node name="map_server" pkg="map_server" type="map_server" args="$(find pioneer_gmap)/map/ssm_5_30_test_1.pgm 0.05" output="screen"/>
+	-->
+	<!-- Group autonomous navigation nodes -->
+	<group if="$(arg Pioneer_Auto_Enabled)">
+		<!-- AMCL NODE -->
+		<node name="amcl" pkg="amcl" type="amcl" >
+			<!-- Overall Filter Parameters -->
+			<param name="initial_pose_x" value="116.1"/>
+			<param name="initial_pose_y" value="50.871"/>
+			<param name="initial_pose_a" value="3.0"/>
+			
+			<!-- Laser Model parameters-->
+			<!--param name="laser_max_beams" value="15"/-->
+
+			<!-- Odometry Model Parameters -->
+			<param name="odom_model_type" value="diff-corrected"/>
+			<param name="odom_alpha1" value="0.105"/> <!-- Expected noise in odom rotation from rotation -->
+			<param name="odom_alpha2" value="0.10"/> <!-- Expected noise in odom rotation from translation -->
+			<param name="odom_alpha3" value="0.10"/> <!-- Expected noise in odom translation from translation -->
+			<param name="odom_alpha4" value="0.11"/> <!-- Expected noise in odom translation from rotation -->
+		</node>
+
+		<!-- MOVE BASE NODES -->
+		<node name="move_base" pkg="move_base" type="move_base" respawn="false">
+		    <rosparam file="$(find pioneer_gmap)/yaml/costmap_common_params.yaml" command="load" ns="local_costmap" />
+		    <rosparam file="$(find pioneer_gmap)/yaml/local_costmap_params.yaml" command="load" />
+		    <rosparam file="$(find pioneer_gmap)/yaml/global_costmap_params.yaml" command="load" />
+		    <rosparam file="$(find pioneer_gmap)/yaml/base_local_planner_params.yaml" command="load" />
+		</node>
+
+		<!-- LAUNCH NODE THAT READS WAYPOINTS
+		<node name="ssm_waypoints" pkg="arl_ssm" type="ssm_waypoints" output="screen"/>-->
+	</group>	   
+	
+	<!-- <node name="slam_gmapping" pkg="gmapping" type="slam_gmapping"/> -->
+	<node name="record_pioneer" pkg="rosbag" type="record" args="-a -o /home/ucmrobotics/" if="$(arg Pioneer_Bag_Enabled)"/>
+</launch>
